@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
-# Install system dependencies Vivado runtime needs
+# ----- system deps -----
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       ca-certificates locales wget curl gnupg2 software-properties-common \
@@ -18,10 +18,7 @@ RUN apt-get update && apt-get upgrade -y && \
 # Locale
 RUN locale-gen en_US.UTF-8
 
-# Optional: prompt color
-ENV PS1="\e[0;33m[\u@\h \W]\$ \e[m "
-
-# Udev rules for Digilent/Xilinx cables
+# ----- udev rules for Digilent/Xilinx -----
 RUN bash -lc 'cat > /etc/udev/rules.d/52-xilinx-digilent-usb.rules << "EOF"\n\
 SUBSYSTEM==\"usb\", ATTR{idVendor}==\"0403\", MODE=\"0666\"\n\
 SUBSYSTEM==\"usb\", ATTR{idVendor}==\"1443\", MODE=\"0666\"\n\
@@ -29,7 +26,27 @@ SUBSYSTEM==\"usb\", ATTR{idVendor}==\"0403\", ATTR{idProduct}==\"6010\", MODE=\"
 SUBSYSTEM==\"usb\", ATTR{idVendor}==\"0403\", ATTR{idProduct}==\"6014\", MODE=\"0666\"\n\
 EOF\nudevadm control --reload-rules || true'
 
-RUN echo "source /opt/Xilinx/Vivado/2024.2/.settings64-Vivado.sh" > /root/.bashrc
+RUN printf 'force_color_prompt=yes\n' >> /etc/bash.bashrc && \
+    printf 'if [ -t 1 ]; then PS1="\\[\\e[1;32m\\]\\u@\\h \\[\\e[1;34m\\]\\W\\[\\e[0m\\]\\$ "; fi\n' >> /etc/bash.bashrc
 
+RUN bash -lc 'echo ". /opt/Xilinx/Vitis/2024.2/settings64.sh" > /etc/profile.d/xilinx.sh'
+RUN echo 'source /opt/Xilinx/Vitis/2024.2/settings64.sh' >> /etc/bash.bashrc
+
+# ====== (B) Create a user that matches host UID/GID ======
+# Pass these at build-time or let them default to 1000:1000
+ARG USER=dev
+ARG UID=1000
+ARG GID=1000
+
+RUN groupadd -g ${GID} ${USER} && \
+    useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER} && \
+    # copy default skel (has standard .bashrc that will source /etc/bash.bashrc)
+    cp -r /etc/skel/. /home/${USER} && \
+    chown -R ${UID}:${GID} /home/${USER}
+
+USER ${USER}
+ENV USER=${USER} HOME=/home/${USER}
 WORKDIR /work
-CMD ["/bin/bash"]
+
+# Login shell by default so .bashrc/.bash_profile load; keeps container interactive-friendly
+CMD ["/bin/bash","-l"]

@@ -1,6 +1,6 @@
 # Docker setup for AMD Vitis
 
-1. Vivado Installation (only once in your entire system)
+1. Full Vitis Installation (only once in your entire system)
 
 - If you have an exported `docker volume` with vivado installation, named `$(VOL).tgz`, you can simply import it:
 
@@ -9,7 +9,7 @@ make import
 ```
 
 - If you wish to create such a volume by install vivado from scratch, do the following:
-  - Download the Offline Vivado Installer (130 GB) named _AMD Unified Installer for FPGAs & Adaptive SoCs 2024.2.2: SFD All OS installer Single-File Download_ from [AMD website](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2024-2.html)
+  - Download the Offline Installer (130 GB) named _AMD Unified Installer for FPGAs & Adaptive SoCs 2024.2.2: SFD All OS installer Single-File Download_ from [AMD website](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2024-2.html)
   - Install it on a docker volume named `$(VOL)` with
 
 ```bash

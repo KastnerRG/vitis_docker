@@ -1,6 +1,6 @@
 IMAGE     := vivado-runner:22.04-$(USER)
 NAME      := vitis-$(USER)
-VOL       := vivado_xilinx-2024.2
+VOL       := vitis-2024.2
 EXTRACTED := $(PWD)/extracted
 ARCHIVE   := $(firstword $(wildcard *.tar))
 
@@ -21,14 +21,13 @@ extract: $(EXTRACTED)/xsetup
 $(EXTRACTED)/xsetup: $(ARCHIVE)
 	mkdir -p $(EXTRACTED)
 	tar -xf "$<" -C $(EXTRACTED) --strip-components=1
-	@# ensure xsetup exists/executable if the tar had a top dir etc.
 	chmod +x $(EXTRACTED)/xsetup
 
 # -------- Actual Tasks to run --------
 
 
 # One-time offline install
-install: image volume $(EXTRACTED)/xsetup
+install: image volume
 	docker run --rm \
 	  --user 0:0 \
 	  -v $(VOL):/opt/Xilinx \
@@ -39,8 +38,8 @@ install: image volume $(EXTRACTED)/xsetup
 	    /tmp/xlnx/xsetup \
 	      --agree 3rdPartyEULA,XilinxEULA \
 	      --batch Install \
-	      --edition "Vivado ML Standard" \
-	      --product Vivado \
+	      --edition "Vitis Unified Software Platform" \
+	      --product Vitis \
 	      --location /opt/Xilinx'
 
 

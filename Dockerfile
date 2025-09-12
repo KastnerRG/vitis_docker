@@ -8,7 +8,7 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       ca-certificates locales wget curl gnupg2 software-properties-common \
       build-essential make gcc g++ libstdc++6 libtinfo5 libncurses5 \
-      python3 python3-pip vim nano less git git-lfs openssh-client && \
+      python3 python3-pip vim nano less file git git-lfs openssh-client && \
     rm -rf /var/lib/apt/lists/*
 
 # --- X11 + legacy/USB support ---
@@ -33,6 +33,8 @@ RUN apt-get update && \
       libwebkit2gtk-4.0-37 \
     && rm -rf /var/lib/apt/lists/*
 
+COPY installLibs.sh /tmp/installLibs.sh
+RUN chmod +x /tmp/installLibs.sh && /tmp/installLibs.sh || true
 
 # Locale
 RUN locale-gen en_US.UTF-8

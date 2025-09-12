@@ -1,0 +1,54 @@
+name: vivado
+services:
+  runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vivado-runner:22.04
+
+  installer:
+    image: vivado-runner:22.04
+    volumes:
+      - xilinx-2024.2:/opt/Xilinx            # install destination (named volume)
+      - ./extracted:/tmp/xlnx:ro             # bind-mount extracted installer (read-only is fine)
+    entrypoint: ["/bin/bash","-lc"]
+    command:
+      - |
+        set -e
+        mkdir -p /tmp/xlnx
+        /tmp/xlnx/xsetup \
+          --agree 3rdPartyEULA,XilinxEULA \
+          --batch Install \
+          --edition "Vivado ML Standard" \
+          --product Vivado \
+          --location /opt/Xilinx
+
+  vitis:
+    image: vivado-runner:22.04
+    volumes:
+      - xilinx-2024.2:/opt/Xilinx
+      - ./vitis_work:/vitis_work
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    working_dir: /vitis_work
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+    entrypoint: ["/bin/bash","-l"]
+
+  export:
+    image: busybox
+    volumes:
+      - xilinx-2024.2:/data
+      - ./:/backup
+    entrypoint: ["sh","-lc"]
+    command: 'tar czf /backup/xilinx-2024.2.tgz -C /data .'
+
+  import:
+    image: busybox
+    volumes:
+      - xilinx-2024.2:/data
+      - ./:/backup
+    entrypoint: ["sh","-lc"]
+    command: 'cd /data && tar xzf /backup/xilinx-2024.2.tgz'
+
+volumes:
+  xilinx-2024.2:

@@ -8,7 +8,7 @@
 make import
 ```
 
-- If you wish to create such a volume by install vivado from scratch, do the following:
+- If you wish to create such a volume by installing Vitis from scratch, do the following:
   - Download the Offline Installer (130 GB) named _AMD Unified Installer for FPGAs & Adaptive SoCs 2024.2.2: SFD All OS installer Single-File Download_ from [AMD website](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2024-2.html)
   - Install it on a docker volume named `$(VOL)` with
 
@@ -16,7 +16,7 @@ make import
 make install
 ```
 
-- You can export this volume with docker installation to provide it to be imported in other systems:
+- You can export this volume with installed files to be imported elsewhere:
 
 ```bash
 make export

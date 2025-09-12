@@ -1,6 +1,6 @@
 # Docker setup for AMD Vitis
 
-1. Full Vitis Installation (only once in your entire system)
+### 1. Full Vitis Installation (only once in your entire system)
 
 - If you have an exported `docker volume` with vivado installation, named `$(VOL).tgz`, you can simply import it:
 
@@ -9,10 +9,11 @@ make import
 ```
 
 - If you wish to create such a volume by installing Vitis from scratch, do the following:
-  - Download the Offline Installer (130 GB) named _AMD Unified Installer for FPGAs & Adaptive SoCs 2024.2.2: SFD All OS installer Single-File Download_ from [AMD website](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2024-2.html)
-  - Install it on a docker volume named `$(VOL)` with
+  - Download the Offline Installer (130 GB) named _"AMD Unified Installer for FPGAs & Adaptive SoCs 2024.2.2: SFD All OS installer Single-File Download"_ from [AMD website](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2024-2.html)
+  - Extract it to `$(EXTRACTED)` and install it on a docker volume named `$(VOL)` with
 
 ```bash
+make extract
 make install
 ```
 
@@ -22,20 +23,26 @@ make install
 make export
 ```
 
-2. Build the user-specific image and start the user-specific container:
+### 2. Build the image and start the container (both user-specific)
 
 ```bash
 make image
 make start
 ```
 
-3. Enter the user-specific container
+Note: both the image and container are user-specific. They have your username attached. This is done for the following reasosns:
+
+1. For security reasons, we avoid running the container as root. But we also need to map a local folder `./vitis_work/` to a folder inside docker `/vitis_work/`, such that we can work on common files, without moving them back and forth. Since that directory is owned by the user (you), we need to match the user ID and group ID of the user when building the image. Having a common image for all users makes this difficult. Hence, we have per-user images.
+2. We are launching a long-running container, since Vitis flow often takes hours, and we want to inspect the progress or any errors. Having one container per user (by username) avoids too many dangling containers.
+
+
+### 3. Enter the user-specific container
 
 ```bash
 make enter
 ```
 
-4. Kill the user-specific container
+### 4. Kill the user-specific container
 
 ```bash
 make kill

@@ -16,9 +16,7 @@ image:
 volume:
 	- docker volume create $(VOL) >/dev/null
 
-extract: $(EXTRACTED)/xsetup
-
-$(EXTRACTED)/xsetup: $(ARCHIVE)
+extract: $(ARCHIVE)
 	mkdir -p $(EXTRACTED)
 	tar -xf "$<" -C $(EXTRACTED) --strip-components=1
 	chmod +x $(EXTRACTED)/xsetup
@@ -61,7 +59,7 @@ start: image volume
 	  bash -lc 'tail -f /dev/null'
 
 
-# Enter always ensures the container is up via dependency
+# Enter the container
 enter:
 	docker exec -it $(NAME) bash -l
 

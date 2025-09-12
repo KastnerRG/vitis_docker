@@ -1,28 +1,41 @@
-IMAGE := vivado-runner:22.04-$(USER)
-NAME  := vitis-$(USER)
-VOL   := vivado_xilinx-2024.2
+IMAGE     := vivado-runner:22.04-$(USER)
+NAME      := vitis-$(USER)
+VOL       := vivado_xilinx-2024.2
 EXTRACTED := $(PWD)/extracted
+ARCHIVE   := $(firstword $(wildcard *.tar))
 
-.PHONY: build install start enter kill export import volume-check
+.PHONY: install start enter kill export import volume extract image container
 
-# Build the runner image
-build:
+image:
 	docker build \
-	  --build-arg USERNAME=$$USER \
+	  --build-arg USER=$$USER \
 	  --build-arg UID=$$(id -u) \
 	  --build-arg GID=$$(id -g) \
 	  -t $(IMAGE) .
 
-# One-time offline install 
-# Requires: ./extracted/xsetup present
-install: volume-check
-	docker run --rm \ 
-		--user 0:0 \
+volume:
+	- docker volume create $(VOL) >/dev/null
+
+extract: $(EXTRACTED)/xsetup
+
+$(EXTRACTED)/xsetup: $(ARCHIVE)
+	mkdir -p $(EXTRACTED)
+	tar -xf "$<" -C $(EXTRACTED) --strip-components=1
+	@# ensure xsetup exists/executable if the tar had a top dir etc.
+	chmod +x $(EXTRACTED)/xsetup
+
+# -------- Actual Tasks to run --------
+
+
+# One-time offline install
+install: image volume $(EXTRACTED)/xsetup
+	docker run --rm \
+	  --user 0:0 \
 	  -v $(VOL):/opt/Xilinx \
 	  -v $(EXTRACTED):/tmp/xlnx:ro \
 	  $(IMAGE) \
 	  bash -lc 'set -e; \
-	    test -x /tmp/xlnx/xsetup || { echo "xsetup not found in /tmp/xlnx"; exit 1; }; \
+	    test -x /tmp/xlnx/xsetup; \
 	    /tmp/xlnx/xsetup \
 	      --agree 3rdPartyEULA,XilinxEULA \
 	      --batch Install \
@@ -30,13 +43,16 @@ install: volume-check
 	      --product Vivado \
 	      --location /opt/Xilinx'
 
-# Start a long-lived per-user container (GUI-ready; stays up)
-start:
+
+# Start a long-lived per-user container (GUI-ready)
+start: image volume
 	docker run -d \
 	  --name $(NAME) \
 	  --hostname vitis \
 	  --user $$(id -u):$$(id -g) \
 	  --privileged --device /dev/bus/usb \
+	  --shm-size=2g \
+	  --ipc=host \
 	  -e DISPLAY=$$DISPLAY \
 	  -v /tmp/.X11-unix:/tmp/.X11-unix \
 	  -v $(VOL):/opt/Xilinx \
@@ -45,32 +61,31 @@ start:
 	  $(IMAGE) \
 	  bash -lc 'tail -f /dev/null'
 
-# Enter the running container
+
+# Enter always ensures the container is up via dependency
 enter:
 	docker exec -it $(NAME) bash -l
+
 
 # Stop/remove the container (volume remains)
 kill:
 	- docker kill $(NAME)
 	- docker rm $(NAME)
 
-# Export/import the Vivado volume as a portable tarball
+
+# Export the volume as a portable tarball
 export:
 	docker run --rm --entrypoint /bin/sh \
 	  -v $(VOL):/data:ro \
 	  -v $$PWD:/backup \
 	  $(IMAGE) \
-	  -c 'set -e; tar -C /data -cf - . | gzip -c > /backup/$(VOL).tgz; ls -lh /backup/$(VOL).tgz'
+	  -c 'tar -C /data -cf - . | gzip -c > /backup/$(VOL).tgz; ls -lh /backup/$(VOL).tgz'
 
-import:
+
+# Import into the volume from local tarball (depends on file existing)
+import: $(VOL).tgz volume
 	docker run --rm --entrypoint /bin/sh \
 	  -v $(VOL):/data \
 	  -v $$PWD:/backup \
 	  $(IMAGE) \
-	  -c 'set -e; test -s /backup/$(VOL).tgz || { echo "Archive missing/empty"; exit 1; }; cd /data; tar xzf /backup/$(VOL).tgz; du -sh /data'
-
-# Create volume if it doesn't exist (safe to re-run)
-volume-check:
-	@if ! docker volume inspect $(VOL) >/dev/null 2>&1; then \
-	  echo "Creating volume $(VOL)"; docker volume create $(VOL) >/dev/null; \
-	fi
+	  -c 'cd /data && tar xzf /backup/$(VOL).tgz; du -sh /data'

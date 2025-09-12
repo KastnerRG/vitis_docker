@@ -1,24 +1,42 @@
 # Docker setup for AMD Vitis
 
-Steps:
+1. Vivado Installation (only once in your entire system)
 
-1. Download the Offline Vivado Installer (130 GB) named _AMD Unified Installer for FPGAs & Adaptive SoCs 2024.2.2: SFD All OS installer Single-File Download_ from [AMD website](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2024-2.html)
-
-2. Extract it to a directory named `extracted`
+- If you have an exported `docker volume` with vivado installation, named `$(VOL).tgz`, you can simply import it:
 
 ```bash
-tar -xf FPGA*.tar -C ./extracted --strip-components=1
+make import
 ```
 
-3. Build the runner container, and Install Vivado into a docker volume named `xilinx-2024.2`
+- If you wish to create such a volume by install vivado from scratch, do the following:
+  - Download the Offline Vivado Installer (130 GB) named _AMD Unified Installer for FPGAs & Adaptive SoCs 2024.2.2: SFD All OS installer Single-File Download_ from [AMD website](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2024-2.html)
+  - Install it on a docker volume named `$(VOL)` with
 
 ```bash
-docker compose build runner
-docker compose up --abort-on-container-exit installer
+make install
 ```
 
-4. Run the container with the volume mounted, and the location `./vitis_work/` mounted to `/vitis_work`
+- You can export this volume with docker installation to provide it to be imported in other systems:
 
 ```bash
-docker compose run --rm vitis
+make export
+```
+
+2. Build the user-specific image and start the user-specific container:
+
+```bash
+make image
+make start
+```
+
+3. Enter the user-specific container
+
+```bash
+make enter
+```
+
+4. Kill the user-specific container
+
+```bash
+make kill
 ```

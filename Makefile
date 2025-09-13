@@ -81,7 +81,7 @@ export:
 
 # Import into the volume from local tarball (depends on file existing)
 import: $(VOL).tgz volume
-	docker run --rm --entrypoint /bin/sh \
+	docker run --rm  --user 0:0 --entrypoint /bin/sh \
 	  -v $(VOL):/data \
 	  -v $$PWD:/backup \
 	  $(IMAGE) \

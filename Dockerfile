@@ -33,11 +33,16 @@ RUN apt-get update && \
       libwebkit2gtk-4.0-37 \
     && rm -rf /var/lib/apt/lists/*
 
+# --- From installLibs.sh
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      libc6-dev-i386 net-tools graphviz make unzip zip g++ \
+      libtinfo5 xvfb git libncursesw5 libnss3-dev libgdk-pixbuf2.0-dev \
+      libgtk-3-dev libxss-dev libasound2 fdisk && \
+    rm -rf /var/lib/apt/lists/*
+
 # ----- Mac x11 forwarding -----
 RUN apt-get update && apt-get install -y x11-utils netcat-openbsd
-
-COPY installLibs.sh /tmp/installLibs.sh
-RUN chmod +x /tmp/installLibs.sh && /tmp/installLibs.sh || true
 
 # Locale
 RUN locale-gen en_US.UTF-8
@@ -80,7 +85,7 @@ RUN set -eux; \
 
 USER ${USER}
 ENV USER=${USER} HOME=/home/${USER}
-WORKDIR /work
+WORKDIR /vitis_work
 
 # Login shell by default so .bashrc/.bash_profile load; keeps container interactive-friendly
 CMD ["/bin/bash","-l"]

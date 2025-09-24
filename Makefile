@@ -3,11 +3,14 @@ NAME      := vitis-$(USER)
 VOL       := vitis-2024.2
 EXTRACTED := $(PWD)/extracted
 ARCHIVE   := $(firstword $(wildcard *.tar))
+PLATFORM  := linux/amd64
+IMPORTDIR := /Volumes/TOSHIBA\ EXT
 
 .PHONY: install start enter kill export import volume extract image container
 
 image:
 	docker build \
+	  --platform $(PLATFORM) \
 	  --build-arg USER=$$USER \
 	  --build-arg UID=$$(id -u) \
 	  --build-arg GID=$$(id -g) \
@@ -27,6 +30,7 @@ extract: $(ARCHIVE)
 # One-time offline install
 install: image volume
 	docker run --rm \
+	  --platform $(PLATFORM) \
 	  --user 0:0 \
 	  -v $(VOL):/opt/Xilinx \
 	  -v $(EXTRACTED):/tmp/xlnx:ro \
@@ -44,13 +48,16 @@ install: image volume
 # Start a long-lived per-user container (GUI-ready)
 start: image volume
 	docker run -d \
+	  --platform $(PLATFORM) \
 	  --name $(NAME) \
 	  --hostname vitis \
 	  --user $$(id -u):$$(id -g) \
 	  --privileged --device /dev/bus/usb \
 	  --shm-size=2g \
 	  --ipc=host \
-	  -e DISPLAY=$$DISPLAY \
+	  -e DISPLAY=host.docker.internal:0 \
+	  -e QT_X11_NO_MITSHM=1 \
+  	  -e _JAVA_AWT_WM_NONREPARENTING=1 \
 	  -v /tmp/.X11-unix:/tmp/.X11-unix \
 	  -v $(VOL):/opt/Xilinx \
 	  -v $$PWD/vitis_work:/vitis_work \
@@ -72,7 +79,7 @@ kill:
 
 # Export the volume as a portable tarball
 export:
-	docker run --rm --entrypoint /bin/sh \
+	docker run --rm --platform $(PLATFORM) --entrypoint /bin/sh \
 	  -v $(VOL):/data:ro \
 	  -v $$PWD:/backup \
 	  $(IMAGE) \
@@ -80,9 +87,9 @@ export:
 
 
 # Import into the volume from local tarball (depends on file existing)
-import: $(VOL).tgz volume
-	docker run --rm  --user 0:0 --entrypoint /bin/sh \
+import: ${IMPORTDIR}/$(VOL).tgz volume
+	docker run --rm --platform $(PLATFORM) --user 0:0 --entrypoint /bin/sh \
 	  -v $(VOL):/data \
-	  -v $$PWD:/backup \
+	  -v ${IMPORTDIR}:/backup \
 	  $(IMAGE) \
 	  -c 'cd /data && tar xzf /backup/$(VOL).tgz; du -sh /data'

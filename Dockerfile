@@ -33,6 +33,9 @@ RUN apt-get update && \
       libwebkit2gtk-4.0-37 \
     && rm -rf /var/lib/apt/lists/*
 
+# ----- Mac x11 forwarding -----
+RUN apt-get update && apt-get install -y x11-utils netcat-openbsd
+
 COPY installLibs.sh /tmp/installLibs.sh
 RUN chmod +x /tmp/installLibs.sh && /tmp/installLibs.sh || true
 
@@ -58,11 +61,22 @@ ARG USER=dev
 ARG UID=1000
 ARG GID=1000
 
-RUN groupadd -g ${GID} ${USER} && \
-    useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER} && \
-    # copy default skel (has standard .bashrc that will source /etc/bash.bashrc)
-    cp -r /etc/skel/. /home/${USER} && \
-    chown -R ${UID}:${GID} /home/${USER}
+RUN set -eux; \
+    # If a group with GID exists, reuse it; otherwise create one named ${USER}
+    if getent group "${GID}" >/dev/null; then \
+        echo "Using existing group $(getent group "${GID}" | cut -d: -f1) (GID=${GID})"; \
+    else \
+        groupadd -g "${GID}" "${USER}"; \
+    fi; \
+    # Create the user if missing; otherwise align its IDs
+    if id -u "${USER}" >/dev/null 2>&1; then \
+        usermod -u "${UID}" -g "${GID}" "${USER}"; \
+    else \
+        useradd -m -u "${UID}" -g "${GID}" -s /bin/bash "${USER}"; \
+    fi; \
+    # Populate home and set ownership
+    cp -rT /etc/skel "/home/${USER}"; \
+    chown -R "${UID}:${GID}" "/home/${USER}"
 
 USER ${USER}
 ENV USER=${USER} HOME=/home/${USER}

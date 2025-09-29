@@ -4,7 +4,7 @@ VOL       := vitis-2024.2
 EXTRACTED := $(PWD)/extracted
 ARCHIVE   := $(firstword $(wildcard *.tar))
 PLATFORM  := linux/amd64
-IMPORTDIR := /Volumes/TOSHIBA\ EXT
+IMPORTDIR := ./
 
 .PHONY: install start enter kill export import volume extract image container
 

@@ -5,7 +5,7 @@
 - If you have an exported `docker volume` with vivado installation, named `$(VOL).tgz`, you can simply import it:
 
 ```bash
-make import
+make import IMPORTDIR=path/to/dir
 ```
 
 - If you wish to create such a volume by installing Vitis from scratch, do the following:
@@ -30,7 +30,7 @@ make image
 make start
 ```
 
-Note: both the image and container are user-specific. They have your username attached. This is done for the following reasosns:
+Note: both the image and container are user-specific. They have your username attached. This is done for the following reasons:
 
 1. For security reasons, we avoid running the container as root. But we also need to map a local folder `./vitis_work/` to a folder inside docker `/vitis_work/`, such that we can work on common files, without moving them back and forth. Since that directory is owned by the user (you), we need to match the user ID and group ID of the user when building the image. Having a common image for all users makes this difficult. Hence, we have per-user images.
 2. We are launching a long-running container, since Vitis flow often takes hours, and we want to inspect the progress or any errors. Having one container per user (by username) avoids too many dangling containers.

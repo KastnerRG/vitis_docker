@@ -42,7 +42,14 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # ----- Mac x11 forwarding -----
-RUN apt-get update && apt-get install -y x11-utils netcat-openbsd
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    xauth x11-apps libxrender1 libxext6 libxtst6 libfontconfig1 libglu1-mesa \
+    && rm -rf /var/lib/apt/lists/*
+
+# Qt/Java/X11 quirks that matter for Vivado/Vitis in containers
+ENV QT_X11_NO_MITSHM=1 \
+    _JAVA_AWT_WM_NONREPARENTING=1 \
+    LIBGL_ALWAYS_INDIRECT=1
 
 # Locale
 RUN locale-gen en_US.UTF-8

@@ -1,5 +1,8 @@
 # Docker setup for AMD Vitis
 
+This docker works on Linux, Windows (WSL) and MacOSX (including ARM). You need about 130GB space on your machine.
+If you choose to install from scratch, you need another 150GB somewhere (in your machine, or in an external drive) for installation.  
+
 ### 1. Full Vitis Installation (only once in your entire system)
 
 - If you have an exported `docker volume` with vivado installation, named `$(VOL).tgz`, you can simply import it:
@@ -13,8 +16,8 @@ make import IMPORTDIR=path/to/dir
   - Extract it to `$(EXTRACTED)` and install it on a docker volume named `$(VOL)` with
 
 ```bash
-make extract
-make install
+make extract ARCHIVE=path/to/archive.tar EXTRACTED=path/to/extracted/dir
+make install EXTRACTED=path/to/extracted/dir
 ```
 
 - You can export this volume with installed files to be imported elsewhere:

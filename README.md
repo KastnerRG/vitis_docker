@@ -1,7 +1,7 @@
 # Docker setup for AMD Vitis
 
-This docker works on Linux, Windows (WSL) and MacOS (including ARM). You need about 130GB space on your machine.
-If you choose to install from scratch, you need another 150GB somewhere (in your machine, or in an external drive) for installation.  
+This docker works on Linux, Windows (WSL) and MacOS (including ARM). You need about 130GB space on your machine to run these tools.
+To install from scratch, you temporarily need another 150GB somewhere, either in your machine, or in an external drive.  
 
 
 ### 0. To install on MacOS with ARM Chip, first install rosetta and docker
@@ -31,7 +31,7 @@ If you choose to install from scratch, you need another 150GB somewhere (in your
   make install EXTRACTED=path/to/extracted/dir
   ```
 
-- You can export this volume with installed files to be imported elsewhere:
+- (Optional) You can export this volume with installed files to be imported elsewhere. You will need an additional 120GB space if you choose to do this:
   ```bash
   make export
   ```

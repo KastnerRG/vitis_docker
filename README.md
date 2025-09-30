@@ -29,7 +29,6 @@ make export
 ### 2. Build the image and start the container (both user-specific)
 
 ```bash
-make image
 make start
 ```
 

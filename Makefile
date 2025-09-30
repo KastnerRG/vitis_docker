@@ -6,19 +6,6 @@ ARCHIVE   := $(firstword $(wildcard *.tar))
 PLATFORM  := linux/amd64
 IMPORTDIR := ./
 
-# Mac x11 related 
-XSOCK := /tmp/.X11-unix
-XAUTH := $(HOME)/.Xauthority
-HOST_IP := $(shell ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
-HOSTNAME := $(shell hostname)
-UNAME_S := $(shell uname -s)
-
-ifeq ($(UNAME_S),Darwin)  # macOS
-  DISPLAY_ENV = host.docker.internal:0
-else                     # Linux
-  DISPLAY_ENV = $$DISPLAY
-endif
-
 .PHONY: install start enter kill export import volume extract image container xauth
 
 image:
@@ -37,7 +24,22 @@ extract: $(ARCHIVE)
 	tar -xf "$<" -C $(EXTRACTED) --strip-components=1
 	chmod +x $(EXTRACTED)/xsetup
 
-ifeq ($(UNAME_S),Darwin) # macOS needs special handling for xauth to show GUI
+vitis_work:
+	mkdir -p vitis_work
+
+
+# Mac x11 related 
+XSOCK := /tmp/.X11-unix
+XAUTH := $(HOME)/.Xauthority
+HOST_IP := $(shell ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
+HOSTNAME := $(shell hostname)
+UNAME_S := $(shell uname -s)
+
+
+ifeq ($(UNAME_S),Darwin) # macOS
+
+DISPLAY_ENV = host.docker.internal:0
+
 xauth:
 	@echo "[xauth] Allowing localhost clients"
 	@xhost +127.0.0.1 +localhost >/dev/null 2>&1 || true
@@ -56,9 +58,13 @@ xauth:
 	    xauth add "$$D" MIT-MAGIC-COOKIE-1 "$$COOKIE" 2>/dev/null || true; \
 	done; \
 	xauth list | egrep '$(HOST_IP):0|$(HOSTNAME):0|localhost:0|127\.0\.0\.1:0' || true
+
 else  # non-macOS
+
+DISPLAY_ENV = $$DISPLAY
 xauth:
 	@true
+
 endif
 
 # -------- Actual Tasks to run --------
@@ -83,7 +89,7 @@ install: image volume
 
 
 # Start a long-lived per-user container (GUI-ready)
-start: image volume xauth
+start: image volume xauth vitis_work
 	docker run -d \
 	  --platform $(PLATFORM) \
 	  --name $(NAME) \

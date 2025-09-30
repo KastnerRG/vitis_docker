@@ -10,11 +10,11 @@ To install from scratch, you temporarily need another 150GB somewhere, either in
   ```bash
   softwareupdate --install-rosetta
   ```
-2. Install docker desktop by folllowinf [these instructions](https://docs.docker.com/desktop/setup/install/mac-install/).
+2. Install docker desktop by folllowing [these instructions](https://docs.docker.com/desktop/setup/install/mac-install/).
 
 ### 1. Full Vitis Installation (only once in your entire system)
 
-- If you have an exported `docker volume` with vivado installation (*.tgz), you can simply import it:
+- If you have an exported docker volume with vivado installation (*.tgz), you can simply import it:
   ```bash
   make import IMPORTDIR=path/to/dir
   ```
@@ -60,7 +60,7 @@ vitis_hls --classic
 
 ### 4. Kill the user-specific container
 
-If anything goes wrong with the setup, you can simply stop the container and delete the image with the following command, and do a `make start` again.
+If anything goes wrong with the setup, with the following command you can simply stop the container and delete the runner image (without deleting your volume/installation), and do a `make start` again.
 
 ```bash
 make kill

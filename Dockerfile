@@ -51,6 +51,40 @@ ENV QT_X11_NO_MITSHM=1 \
     _JAVA_AWT_WM_NONREPARENTING=1 \
     LIBGL_ALWAYS_INDIRECT=1
 
+## --- Host-info stability & tools Vivado probes ---
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    dbus iproute2 net-tools pciutils usbutils locales \
+ && rm -rf /var/lib/apt/lists/*
+
+## Locale (avoid rare crashy codepaths)
+RUN sed -i 's/^# \(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen \
+ && locale-gen
+
+ENV LC_ALL=en_US.UTF-8 \
+    LANG=en_US.UTF-8
+
+## X/GTK/Eclipse stability (safe no-ops if unused)
+ENV QT_X11_NO_MITSHM=1 \
+    _JAVA_AWT_WM_NONREPARENTING=1 \
+    LIBGL_ALWAYS_INDIRECT=1 \
+    LIBGL_ALWAYS_SOFTWARE=1 \
+    SWT_GTK3=0 \
+    GDK_BACKEND=x11 \
+    GDK_DISABLE_SHM=1 \
+    NO_AT_BRIDGE=1 \
+    XILINX_ENABLE_WEBTALK=0 \
+    XILINX_LOCAL_USERDATA=no
+
+## Small init that ensures machine-id and sane /etc/hosts each container start
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y dbus \
+ && dbus-uuidgen --ensure=/etc/machine-id \
+ && mkdir -p /var/lib/dbus \
+ && ln -sf /etc/machine-id /var/lib/dbus/machine-id \
+ && echo "127.0.0.1 vitis localhost" >> /etc/hosts \
+ && echo "::1       localhost" >> /etc/hosts \
+ && rm -rf /var/lib/apt/lists/*
+
+
 # Locale
 RUN locale-gen en_US.UTF-8
 

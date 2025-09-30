@@ -85,6 +85,9 @@ start: image volume xauth
 	  -e QT_X11_NO_MITSHM=1 \
   	  -e _JAVA_AWT_WM_NONREPARENTING=1 \
 	  -e LIBGL_ALWAYS_INDIRECT=1 \
+	  -e SWT_GTK3=0 \
+	  -e GDK_BACKEND=x11 \
+	  -e NO_AT_BRIDGE=1 \
 	  -v $(XSOCK):/tmp/.X11-unix:ro \
 	  -v $(XAUTH):/home/$(USER)/.Xauthority:ro \
 	  -v $(VOL):/opt/Xilinx \

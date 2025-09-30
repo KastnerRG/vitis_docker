@@ -11,6 +11,13 @@ XSOCK := /tmp/.X11-unix
 XAUTH := $(HOME)/.Xauthority
 HOST_IP := $(shell ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
 HOSTNAME := $(shell hostname)
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)  # macOS
+  DISPLAY_ENV = host.docker.internal:0
+else                     # Linux
+  DISPLAY_ENV = $$DISPLAY
+endif
 
 .PHONY: install start enter kill export import volume extract image container xauth
 
@@ -29,6 +36,30 @@ extract: $(ARCHIVE)
 	mkdir -p $(EXTRACTED)
 	tar -xf "$<" -C $(EXTRACTED) --strip-components=1
 	chmod +x $(EXTRACTED)/xsetup
+
+ifeq ($(UNAME_S),Darwin) # macOS needs special handling for xauth to show GUI
+xauth:
+	@echo "[xauth] Allowing localhost clients"
+	@xhost +127.0.0.1 +localhost >/dev/null 2>&1 || true
+	@echo "[xauth] Preparing cookie aliases for $(HOST_IP) and $(HOSTNAME)"
+	@COOKIE=$$(xauth list "$$(hostname)/unix:0" | awk '{print $$3}'); \
+	if [ -z "$$COOKIE" ]; then \
+	  xauth generate :0 . trusted >/dev/null 2>&1; \
+	  COOKIE=$$(xauth list "$$(hostname)/unix:0" | awk '{print $$3}'); \
+	fi; \
+	echo "[xauth] Using cookie: $${COOKIE}"; \
+	for D in \
+	  "$(HOST_IP):0" \
+	  "localhost:0" \
+	  "127.0.0.1:0" \
+	  "$(HOSTNAME):0"; do \
+	    xauth add "$$D" MIT-MAGIC-COOKIE-1 "$$COOKIE" 2>/dev/null || true; \
+	done; \
+	xauth list | egrep '$(HOST_IP):0|$(HOSTNAME):0|localhost:0|127\.0\.0\.1:0' || true
+else  # non-macOS
+xauth:
+	@true
+endif
 
 # -------- Actual Tasks to run --------
 
@@ -50,25 +81,6 @@ install: image volume
 	      --product Vitis \
 	      --location /opt/Xilinx'
 
-xauth:
-	@echo "[xauth] Allowing localhost clients"
-	@xhost +127.0.0.1 +localhost >/dev/null 2>&1 || true
-	@echo "[xauth] Preparing cookie aliases for $(HOST_IP) and $(HOSTNAME)"
-	@COOKIE=$$(xauth list "$$(hostname)/unix:0" | awk '{print $$3}'); \
-	if [ -z "$$COOKIE" ]; then \
-	  xauth generate :0 . trusted >/dev/null 2>&1; \
-	  COOKIE=$$(xauth list "$$(hostname)/unix:0" | awk '{print $$3}'); \
-	fi; \
-	echo "[xauth] Using cookie: $${COOKIE}"; \
-	for D in \
-	  "$(HOST_IP):0" \
-	  "localhost:0" \
-	  "127.0.0.1:0" \
-	  "$(HOSTNAME):0"; do \
-	    xauth add "$$D" MIT-MAGIC-COOKIE-1 "$$COOKIE" 2>/dev/null || true; \
-	done; \
-	xauth list | egrep '$(HOST_IP):0|$(HOSTNAME):0|localhost:0|127\.0\.0\.1:0' || true
-
 
 # Start a long-lived per-user container (GUI-ready)
 start: image volume xauth
@@ -80,7 +92,7 @@ start: image volume xauth
 	  --privileged --device /dev/bus/usb \
 	  --shm-size=2g \
 	  --ipc=host \
-	  -e DISPLAY=host.docker.internal:0 \
+	  -e DISPLAY=$(DISPLAY_ENV) \
 	  -e XAUTHORITY=/home/$(USER)/.Xauthority \
 	  -e QT_X11_NO_MITSHM=1 \
   	  -e _JAVA_AWT_WM_NONREPARENTING=1 \

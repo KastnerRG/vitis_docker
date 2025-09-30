@@ -49,3 +49,16 @@ make enter
 ```bash
 make kill
 ```
+
+
+## Pre-requisites for Mac with Arm chip
+
+Complete the following steps first before setting up docker.
+
+### Install Rosetta
+```bash
+softwareupdate --install-rosetta
+```
+
+### Install docker desktop
+Follow the instructions [here](https://docs.docker.com/desktop/setup/install/mac-install/).

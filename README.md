@@ -1,11 +1,20 @@
 # Docker setup for AMD Vitis
 
-This docker works on Linux, Windows (WSL) and MacOSX (including ARM). You need about 130GB space on your machine.
+This docker works on Linux, Windows (WSL) and MacOS (including ARM). You need about 130GB space on your machine.
 If you choose to install from scratch, you need another 150GB somewhere (in your machine, or in an external drive) for installation.  
+
+
+### 0. To install on MacOS with ARM Chip, complete the following pre-requisites first
+
+1. Install rosetta
+```bash
+softwareupdate --install-rosetta
+```
+2. Install docker desktop by folllowinf [these instructions](https://docs.docker.com/desktop/setup/install/mac-install/).
 
 ### 1. Full Vitis Installation (only once in your entire system)
 
-- If you have an exported `docker volume` with vivado installation, named `$(VOL).tgz`, you can simply import it:
+- If you have an exported `docker volume` with vivado installation (*.tgz), you can simply import it:
 
 ```bash
 make import IMPORTDIR=path/to/dir
@@ -13,7 +22,7 @@ make import IMPORTDIR=path/to/dir
 
 - If you wish to create such a volume by installing Vitis from scratch, do the following:
   - Download the Offline Installer (130 GB) named _"AMD Unified Installer for FPGAs & Adaptive SoCs 2024.2.2: SFD All OS installer Single-File Download"_ from [AMD website](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2024-2.html)
-  - Extract it to `$(EXTRACTED)` and install it on a docker volume named `$(VOL)` with
+  - Extract it and install it on a docker volume
 
 ```bash
 make extract ARCHIVE=path/to/archive.tar EXTRACTED=path/to/extracted/dir
@@ -49,16 +58,3 @@ make enter
 ```bash
 make kill
 ```
-
-
-## Pre-requisites for Mac with Arm chip
-
-Complete the following steps first before setting up docker.
-
-### Install Rosetta
-```bash
-softwareupdate --install-rosetta
-```
-
-### Install docker desktop
-Follow the instructions [here](https://docs.docker.com/desktop/setup/install/mac-install/).
